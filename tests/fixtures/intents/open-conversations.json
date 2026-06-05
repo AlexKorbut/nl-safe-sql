@@ -1,0 +1,11 @@
+{
+  "type": "select",
+  "target": "conversations",
+  "select": ["id", "title", "status", "created_at"],
+  "conditions": [
+    { "field": "status", "op": "equals", "value": "open" },
+    { "field": "created_at", "op": "gte", "value": "-7 days" }
+  ],
+  "orderBy": [{ "field": "created_at", "direction": "desc" }],
+  "limit": 50
+}

@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NL → Safe SQL</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0f1419;
+      color: #e7ecf3;
+      min-height: 100vh;
+    }
+    .wrap {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 3rem;
+    }
+    h1 {
+      margin: 0 0 0.25rem;
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+    .sub {
+      margin: 0 0 1.5rem;
+      color: #8b9cb3;
+      font-size: 0.9rem;
+    }
+    form {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    input[type="text"] {
+      flex: 1;
+      padding: 0.65rem 0.85rem;
+      border: 1px solid #2a3544;
+      border-radius: 8px;
+      background: #1a2332;
+      color: inherit;
+      font-size: 1rem;
+    }
+    input[type="text"]:focus {
+      outline: 2px solid #3d7eff;
+      border-color: transparent;
+    }
+    button {
+      padding: 0.65rem 1.1rem;
+      border: none;
+      border-radius: 8px;
+      background: #3d7eff;
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    button:hover:not(:disabled) { background: #2f6ae8; }
+    button:disabled { opacity: 0.55; cursor: wait; }
+    .examples {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-bottom: 1.5rem;
+    }
+    .chip {
+      padding: 0.3rem 0.65rem;
+      border-radius: 999px;
+      border: 1px solid #2a3544;
+      background: #1a2332;
+      color: #a8b8d0;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .chip:hover { border-color: #3d7eff; color: #e7ecf3; }
+    .panel {
+      background: #1a2332;
+      border: 1px solid #2a3544;
+      border-radius: 10px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+    .panel h2 {
+      margin: 0 0 0.75rem;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #8b9cb3;
+    }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      font-size: 0.85rem;
+      color: #a8b8d0;
+      margin-bottom: 0.75rem;
+    }
+    pre {
+      margin: 0;
+      padding: 0.75rem;
+      background: #0f1419;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-size: 0.8rem;
+      line-height: 1.45;
+      color: #c5d4e8;
+    }
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.5rem 0.65rem;
+      border-bottom: 1px solid #2a3544;
+    }
+    th { color: #8b9cb3; font-weight: 500; }
+    tr:last-child td { border-bottom: none; }
+    .error {
+      color: #ff8a8a;
+      background: #2a1a1a;
+      border: 1px solid #5c3030;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-size: 0.9rem;
+    }
+    .empty { color: #8b9cb3; font-size: 0.9rem; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>NL → Safe SQL</h1>
+    <p class="sub">Ask in plain English. LLM returns intent JSON only — SQL is built safely server-side.</p>
+
+    <form id="form">
+      <input id="question" type="text" placeholder="e.g. Show open conversations from the last 7 days" autocomplete="off" />
+      <button type="submit" id="submit">Ask</button>
+    </form>
+
+    <div class="examples" id="examples"></div>
+
+    <div id="error" class="error hidden"></div>
+
+    <div id="results" class="hidden">
+      <div class="panel">
+        <h2>Results</h2>
+        <div class="meta" id="meta"></div>
+        <div class="table-wrap" id="table-wrap"></div>
+      </div>
+
+      <div class="panel">
+        <h2>LLM response</h2>
+        <pre id="raw-intent"></pre>
+      </div>
+
+      <div class="panel" id="sql-panel">
+        <h2>SQL preview</h2>
+        <pre id="sql"></pre>
+      </div>
+
+      <div class="panel">
+        <h2>Validated intent</h2>
+        <pre id="intent"></pre>
+      </div>
+    </div>
+
+    <p id="idle" class="empty">Try a question above or pick an example.</p>
+  </div>
+
+  <script>
+    const EXAMPLES = [
+      "Show open conversations",
+      "Find messages containing refund",
+      "Conversations tagged billing",
+      "List closed conversations",
+      "Messages about API rate limits",
+    ];
+
+    const form = document.getElementById("form");
+    const input = document.getElementById("question");
+    const submit = document.getElementById("submit");
+    const examplesEl = document.getElementById("examples");
+    const errorEl = document.getElementById("error");
+    const resultsEl = document.getElementById("results");
+    const idleEl = document.getElementById("idle");
+    const metaEl = document.getElementById("meta");
+    const tableWrap = document.getElementById("table-wrap");
+    const rawIntentEl = document.getElementById("raw-intent");
+    const sqlEl = document.getElementById("sql");
+    const sqlPanel = document.getElementById("sql-panel");
+    const intentEl = document.getElementById("intent");
+
+    EXAMPLES.forEach((q) => {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "chip";
+      chip.textContent = q;
+      chip.addEventListener("click", () => {
+        input.value = q;
+        form.requestSubmit();
+      });
+      examplesEl.appendChild(chip);
+    });
+
+    function showError(msg, rawIntent) {
+      errorEl.textContent = msg;
+      errorEl.classList.remove("hidden");
+      if (rawIntent != null) {
+        idleEl.classList.add("hidden");
+        resultsEl.classList.remove("hidden");
+        rawIntentEl.textContent = JSON.stringify(rawIntent, null, 2);
+        metaEl.innerHTML = "";
+        tableWrap.innerHTML = '<p class="empty">Query failed before execution.</p>';
+        intentEl.textContent = "—";
+        sqlPanel.classList.add("hidden");
+      } else {
+        resultsEl.classList.add("hidden");
+        idleEl.classList.add("hidden");
+      }
+    }
+
+    function clearError() {
+      errorEl.classList.add("hidden");
+    }
+
+    function renderTable(rows) {
+      if (!rows.length) {
+        tableWrap.innerHTML = '<p class="empty">No rows returned.</p>';
+        return;
+      }
+
+      const cols = [...new Set(rows.flatMap((r) => Object.keys(r)))];
+      const thead = `<tr>${cols.map((c) => `<th>${escapeHtml(c)}</th>`).join("")}</tr>`;
+      const tbody = rows
+        .map(
+          (row) =>
+            `<tr>${cols.map((c) => `<td>${escapeHtml(formatCell(row[c]))}</td>`).join("")}</tr>`
+        )
+        .join("");
+
+      tableWrap.innerHTML = `<table><thead>${thead}</thead><tbody>${tbody}</tbody></table>`;
+    }
+
+    function formatCell(v) {
+      if (v == null) return "";
+      if (typeof v === "object") return JSON.stringify(v);
+      return String(v);
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const question = input.value.trim();
+      if (!question) return;
+
+      clearError();
+      submit.disabled = true;
+      submit.textContent = "…";
+
+      try {
+        const res = await fetch("/query", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          showError(
+            `${data.error ?? "ERROR"}: ${data.message ?? res.statusText}`,
+            data.rawIntent
+          );
+          return;
+        }
+
+        idleEl.classList.add("hidden");
+        resultsEl.classList.remove("hidden");
+
+        metaEl.innerHTML = `
+          <span><strong>${data.meta.rowCount}</strong> rows</span>
+          <span><strong>${data.meta.executionMs}</strong> ms</span>
+        `;
+
+        renderTable(data.rows);
+        rawIntentEl.textContent = JSON.stringify(data.meta.rawIntent, null, 2);
+        intentEl.textContent = JSON.stringify(data.meta.intent, null, 2);
+
+        if (data.meta.sqlPreview) {
+          sqlPanel.classList.remove("hidden");
+          const params = data.meta.paramsPreview?.length
+            ? `\n\n-- params: ${JSON.stringify(data.meta.paramsPreview)}`
+            : "";
+          sqlEl.textContent = data.meta.sqlPreview + params;
+        } else {
+          sqlPanel.classList.add("hidden");
+        }
+      } catch (err) {
+        showError(err instanceof Error ? err.message : "Network error");
+      } finally {
+        submit.disabled = false;
+        submit.textContent = "Ask";
+      }
+    });
+  </script>
+</body>
+</html>
