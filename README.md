@@ -9,6 +9,13 @@ Production-oriented natural language interface where **the LLM never generates S
 3. **Deterministic Execution** — Query Builder → SQLite (parameterized)
 4. **Response Formatter** — rows + metadata (+ optional SQL preview)
 
+## Design document
+
+Problem statement, solution options, architecture decisions, and expected query behavior:
+
+- [docs/DESIGN_DOCUMENT.md](docs/DESIGN_DOCUMENT.md)
+- [docs/DESIGN_DOCUMENT.pdf](docs/DESIGN_DOCUMENT.pdf)
+
 ## Quick start
 
 ```bash
