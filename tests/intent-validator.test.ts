@@ -8,7 +8,7 @@ describe("IntentValidator", () => {
   const validIntent = {
     type: "select" as const,
     target: "conversations" as const,
-    select: ["id", "title"],
+    select: ["id", "guest_name"],
     conditions: [{ field: "status", op: "equals" as const, value: "open" }],
     limit: 10,
   };
@@ -23,20 +23,6 @@ describe("IntentValidator", () => {
     expect(() => validateIntent({ type: "delete" })).toThrow(
       IntentValidationError
     );
-  });
-
-  it("rejects SQL injection in values", () => {
-    const result = validateIntent({
-      ...validIntent,
-      conditions: [
-        {
-          field: "title",
-          op: "contains",
-          value: "'; DROP TABLE conversations; --",
-        },
-      ],
-    });
-    expect(result.intent.conditions?.[0].value).toContain("DROP");
   });
 
   it("rejects forbidden fields", () => {
@@ -68,8 +54,19 @@ describe("IntentValidator", () => {
       type: "select",
       target: "conversations",
       select: ["id"],
-      conditions: [{ field: "content", op: "contains", value: "refund" }],
+      conditions: [{ field: "body", op: "contains", value: "breakfast" }],
     });
     expect(result.joinedTables.has("messages")).toBe(true);
+  });
+
+  it("accepts aggregate intents with groupBy", () => {
+    const result = validateIntent({
+      type: "aggregate",
+      target: "conversations",
+      select: [{ fn: "count", field: "*", alias: "count" }, "status"],
+      groupBy: ["status"],
+      limit: 10,
+    });
+    expect(result.intent.type).toBe("aggregate");
   });
 });

@@ -9,7 +9,7 @@
 
 ## 1. Problem Statement
 
-Operational SaaS products often need a **natural-language query interface** so staff can explore inbox-style data without writing SQL. The naive approach — asking an LLM to emit SQL and executing it — creates severe risks:
+Hotel operations staff need a **natural-language query interface** over guest conversations without writing SQL. The naive approach — asking an LLM to emit SQL — creates severe risks:
 
 - **SQL injection** via prompt manipulation or model hallucination
 - **Unbounded data access** (DROP, DELETE, arbitrary table scans)
@@ -25,41 +25,28 @@ The required pipeline: users ask questions in plain language, but **the LLM neve
 | Safety by design | SQL injection structurally impossible; invalid intents fail closed |
 | Determinism | Same intent JSON always produces the same SQL |
 | Testability | Builder, validator, and pipeline testable without the LLM |
-| Operability | HTTP API, seed data, audit trail, debug visibility |
+| Completeness | Support aggregates, EXISTS, OR, HAVING per test-challenge queries |
 | TypeScript | Full implementation in TypeScript |
+
+### Non-goals
+
+- Nested boolean condition groups (flat AND/OR only)
+- LLM-generated SQL under any circumstances
+- Arbitrary subqueries beyond whitelisted EXISTS patterns
 
 ---
 
 ## 2. Solution Options Considered
 
-All candidates assume an **LLM in the NL understanding step**. The decision was *how* the model participates — not whether to use one.
-
 ### Option A — LLM generates SQL + post-execution sandbox
 
-The model outputs SQL; a parser or allow-list strips dangerous statements before execution.
-
-| Pros | Cons |
-|------|------|
-| Maximum expressiveness (JOINs, aggregates) | Parsing SQL reliably is hard; bypasses are common |
-| Minimal intermediate schema | Non-deterministic; hard to unit-test |
-| | Violates the core constraint: LLM must not produce SQL |
-
 **Rejected** — fails the fundamental security model.
-
----
 
 ### Option B — LLM generates Query Intent JSON + deterministic builder (chosen)
 
 ```
 Natural Language → LLM → Query Intent JSON → Validator → Query Builder → SQLite
 ```
-
-| Pros | Cons |
-|------|------|
-| LLM never touches SQL | Intent schema must be designed upfront |
-| Whitelist validation before build | Aggregations require schema extension |
-| Parameterized queries (`?`) | Complex questions may not map cleanly |
-| Fully unit-testable transpiler | |
 
 **Selected** — separates probabilistic NL understanding from deterministic execution.
 
@@ -78,8 +65,8 @@ Natural Language → LLM → Query Intent JSON → Validator → Query Builder �
                     └──────────────────────────────────────────────────┬──────────┘
                                                                        │
                     ┌──────────────────────────────────────────────────▼──────────┐
-                    │  QueryBuilder — SELECT / JOIN / WHERE / ORDER BY / LIMIT      │
-                    │  ConditionBuilder + DateResolver + JoinManager                │
+                    │  QueryBuilder — SELECT / EXISTS / GROUP BY / HAVING / LIMIT   │
+                    │  ConditionBuilder + ExistsBuilder + AggregateBuilder        │
                     └──────────────────────────────────────────────────┬──────────┘
                                                                        │
                     ┌──────────────────────────────────────────────────▼──────────┐
@@ -94,100 +81,91 @@ Natural Language → LLM → Query Intent JSON → Validator → Query Builder �
 ### Security layers
 
 1. **Prompt contract** — system prompt forbids SQL output; `response_format: json_object`
-2. **Zod schema** — `type: "select"` only; known targets and operators
+2. **Zod schema** — `type: select | aggregate` only; known targets and operators
 3. **Schema registry whitelist** — allowed tables, fields, ops per field type
 4. **Deterministic builder** — no string concatenation of user values; only `?` placeholders
 5. **Fail-closed errors** — validation → HTTP 400; LLM failure → HTTP 502
 
-### Data model
-
-Generic inbox schema used to exercise the pipeline (15 conversations, 28 messages, 10 tags in seed data):
+### Data model (per test challenge)
 
 | Entity | Key fields | Purpose |
 |--------|------------|---------|
-| `conversations` | `id`, `title`, `status`, `created_at` | Thread metadata; `status` is `open` or `closed` |
-| `messages` | `id`, `conversation_id`, `role`, `content`, `created_at` | `role` is `user` or `assistant` |
-| `tags` | `id`, `name` | Label catalog |
-| `conversation_tags` | `conversation_id`, `tag_id` | Many-to-many link |
+| `conversations` | `guest_name`, `channel`, `status`, `created_at` | Guest thread; `channel` is `email` or `whatsapp` |
+| `messages` | `conversation_id`, `direction`, `body`, `sent_at` | `direction` is `incoming` or `outgoing` |
+| `tags` | `conversation_id`, `label` | Tag assignments (complaint, room_order, …) |
 
-The transpiler is domain-agnostic: only the schema registry and seed data are swappable.
+Seed: 20 conversations, 45 messages, 15 tag rows.
+
+### Key design decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| EXISTS for multi-table filters | INNER JOIN on messages + tags causes cross-product duplicates |
+| JOIN only for SELECT/GROUP BY | Filters on related tables never add JOIN rows |
+| `relatedFilters` with empty conditions | `not_exists` on tags with no conditions = untagged conversations |
+| Unanswered = no outgoing message | Simple, testable definition documented explicitly |
+| Flat OR via `conditionLogic` | Covers email OR whatsapp without nested expression trees |
 
 ---
 
-## 4. How the Approach Was Validated
+## 4. Query Intent schema (extended)
+
+```json
+{
+  "type": "select | aggregate",
+  "target": "conversations | messages",
+  "select": ["field"] | [{ "fn": "count", "field": "*", "alias": "count", "filter": [...] }],
+  "conditions": [{ "field", "op", "value" }],
+  "conditionLogic": "and | or",
+  "relatedFilters": [{ "relation": "messages|tags", "existence": "exists|not_exists", "conditions": [] }],
+  "groupBy": ["field"],
+  "having": [{ "fn": "count", "field": "messages.id", "alias": "...", "op": "gt", "value": 0, "filter": [...] }],
+  "orderBy": [{ "field", "direction" }],
+  "limit": 100
+}
+```
+
+Operators: `equals`, `notEquals`, `gte`, `lte`, `contains`, `starts_with`, `ends_with`
+
+---
+
+## 5. How the Approach Was Validated
 
 | Layer | Validation |
 |-------|------------|
-| Date resolver | Unit tests for `-7 days`, `today`, `this month`, ISO dates |
-| Intent validator | Unit tests for forbidden tables, fields, operators, limits |
-| Query builder | Unit tests for JOIN inference, WHERE, ORDER BY, LIMIT |
+| Date resolver | Unit tests for `-7 days`, `tomorrow`, `+N days`, `this month` |
+| Intent validator | Unit tests for forbidden tables, fields, operators, aggregates |
+| Query builder | Unit tests for EXISTS, OR, GROUP BY, HAVING |
+| Feedback scenarios | 18 integration tests — one per reviewer query category |
+| Data layer | `npm run db:verify` — 8 canned intents against seed data |
 | Pipeline | Integration test with mock LLM (no API key required) |
-| Data layer | `npm run db:verify` — 4 canned intents against seed data |
-| Manual E2E | Web UI + `scripts/TEST_QUERIES.md` query catalog |
 
 ---
 
-## 5. Expected Query Behavior
+## 6. Expected query behavior
 
-Seed reference date: **2026-06-03**. Relative expressions (`-7 days`, `today`) resolve against the server clock at runtime.
+Seed reference date in docs: **2026-06-03**. Relative expressions resolve against server clock at runtime.
 
-### 5.1 Conversation filters
-
-| Query | Expected result |
-|-------|-----------------|
-| `Show open conversations` | **9 rows** — all `status = open` |
-| `List closed conversations` | **6 rows** — all `status = closed` |
-| `Show conversation id 7` | **1 row** — "API rate limit question" |
-| `Conversations with title containing billing` | **1 row** — id 1 |
-| `Show all conversations ordered by created_at descending` | **15 rows** — newest first (id 13 on top) |
-
-### 5.2 Message search
-
-| Query | Expected result |
-|-------|-----------------|
-| `Find messages containing refund` | **3 rows** — conv 2 (×2) and conv 6 |
-| `Messages from user role only` | **15 rows** — all `role = user` |
-| `Messages from assistant` | **13 rows** — all `role = assistant` |
-| `Messages in conversation 7` | **2 rows** — API rate limit thread |
-| `Find messages containing password` | **2 rows** — conv 8 and 11 |
-
-### 5.3 Tag filters
-
-| Query | Expected result |
-|-------|-----------------|
-| `Conversations tagged billing` | **4 rows** — ids 1, 2, 5, 6 |
-| `Conversations tagged security` | **2 rows** — ids 8, 11 |
-| `Conversations tagged bug` | **2 rows** — ids 12, 13 |
-| `Conversations tagged refund` | **2 rows** — ids 2, 5 |
-| `Conversations tagged mobile` | **1 row** — id 13 |
-
-### 5.4 Date filters
-
-| Query | Expected result |
-|-------|-----------------|
-| `Show conversations from the last 7 days` | **5 rows** — ids 1, 5, 8, 12, 13 (created ≥ 2026-05-27) |
-| `Conversations created after 2026-05-25` | **5 rows** — ids 1, 5, 8, 12, 13 |
-| `Closed conversations created before 2026-06-01` | **6 rows** — all closed records in seed |
-| `Conversations created before 2026-03-01` | **2 rows** — ids 14, 15 |
-| `Messages from the last 30 days` | **26 rows** — all except conv 14–15 messages |
-
-### 5.5 Combined filters
-
-| Query | Expected result |
-|-------|-----------------|
-| `Open conversations tagged billing` | **2 rows** — ids 1, 5 (id 6 is closed) |
-| `Open conversations tagged bug` | **2 rows** — ids 12, 13 |
-| `Closed conversations tagged refund` | **1 row** — id 2 |
-| `Messages about API rate limits` | **2 rows** — conversation 7 |
-| `Open conversations from the last 7 days` | **3 rows** — ids 5, 8, 13 (open + recent) |
+| Query | Mechanism | Expected |
+|-------|-----------|----------|
+| Email channel | `channel = email` | Multiple rows, all email |
+| Open + WhatsApp + last 7 days | AND conditions | Subset of open whatsapp |
+| Complaint + breakfast | dual EXISTS | ids 2, 8 — no duplicate rows |
+| Incoming count ranking | COUNT + filter + GROUP BY | Open conversations ordered by count |
+| Count by status | GROUP BY status | 2 groups summing to 20 |
+| Send vs receive this month | GROUP BY direction | incoming + outgoing counts |
+| Unanswered | not_exists outgoing | ids 12, 16, 18 among others |
+| Untagged tomorrow | not_exists tags + date | ids 16, 17, 18 on 2026-06-04 |
+| Not tagged room_order | not_exists label=room_order | 19 rows |
+| Email OR WhatsApp | conditionLogic or | All 20 conversations |
+| Starts with Hi / ends with thanks | LIKE patterns | Matching message bodies |
+| > 0 incoming messages | HAVING count > 0 | Open conversations with replies received |
 
 ---
 
-## 6. Conclusion
+## 7. Conclusion
 
-This project demonstrates a **safe NL-to-data pipeline**: the LLM is confined to a structured intent layer, and all executable SQL is produced deterministically with whitelists and prepared statements.
-
-The seed dataset and example queries above validate the core patterns — status filters, text search, tag joins, relative dates, and multi-condition queries — without coupling the architecture to any single business domain.
+This project demonstrates a **safe NL-to-data pipeline** aligned with the hotel test-challenge specification. The LLM is confined to structured intent JSON; all executable SQL is produced deterministically with whitelists, EXISTS-based correlation, and prepared statements.
 
 ---
 

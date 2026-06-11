@@ -1,12 +1,25 @@
 export type FieldType = "text" | "number" | "date" | "boolean";
-export type ConditionOp = "equals" | "notEquals" | "gte" | "lte" | "contains";
+export type ConditionOp =
+  | "equals"
+  | "notEquals"
+  | "gte"
+  | "lte"
+  | "contains"
+  | "starts_with"
+  | "ends_with";
 export type TargetTable = "conversations" | "messages";
 export type JoinTable = "messages" | "tags";
 
 export const MAX_LIMIT = 100;
 export const DEFAULT_LIMIT = 50;
 
-const TEXT_OPS: ConditionOp[] = ["equals", "notEquals", "contains"];
+const TEXT_OPS: ConditionOp[] = [
+  "equals",
+  "notEquals",
+  "contains",
+  "starts_with",
+  "ends_with",
+];
 const COMPARABLE_OPS: ConditionOp[] = ["equals", "notEquals", "gte", "lte"];
 
 export interface FieldDef {
@@ -21,7 +34,12 @@ export const ALLOWED_JOIN_TABLES: JoinTable[] = ["messages", "tags"];
 export const TABLE_FIELDS: Record<string, Record<string, FieldDef>> = {
   conversations: {
     id: { column: "conversations.id", type: "number", ops: COMPARABLE_OPS },
-    title: { column: "conversations.title", type: "text", ops: TEXT_OPS },
+    guest_name: {
+      column: "conversations.guest_name",
+      type: "text",
+      ops: TEXT_OPS,
+    },
+    channel: { column: "conversations.channel", type: "text", ops: TEXT_OPS },
     status: { column: "conversations.status", type: "text", ops: TEXT_OPS },
     created_at: {
       column: "conversations.created_at",
@@ -36,46 +54,61 @@ export const TABLE_FIELDS: Record<string, Record<string, FieldDef>> = {
       type: "number",
       ops: COMPARABLE_OPS,
     },
-    role: { column: "messages.role", type: "text", ops: TEXT_OPS },
-    content: { column: "messages.content", type: "text", ops: TEXT_OPS },
-    created_at: {
-      column: "messages.created_at",
+    direction: {
+      column: "messages.direction",
+      type: "text",
+      ops: TEXT_OPS,
+    },
+    body: { column: "messages.body", type: "text", ops: TEXT_OPS },
+    sent_at: {
+      column: "messages.sent_at",
       type: "date",
       ops: COMPARABLE_OPS,
     },
   },
   tags: {
     id: { column: "tags.id", type: "number", ops: COMPARABLE_OPS },
-    name: { column: "tags.name", type: "text", ops: TEXT_OPS },
+    conversation_id: {
+      column: "tags.conversation_id",
+      type: "number",
+      ops: COMPARABLE_OPS,
+    },
+    label: { column: "tags.label", type: "text", ops: TEXT_OPS },
   },
 };
 
 export const SELECTABLE_BY_TARGET: Record<TargetTable, string[]> = {
-  conversations: ["id", "title", "status", "created_at"],
-  messages: ["id", "conversation_id", "role", "content", "created_at"],
+  conversations: ["id", "guest_name", "channel", "status", "created_at"],
+  messages: ["id", "conversation_id", "direction", "body", "sent_at"],
 };
 
 export const JOIN_SELECTABLE: Record<JoinTable, string[]> = {
-  messages: ["id", "conversation_id", "role", "content", "created_at"],
-  tags: ["id", "name"],
+  messages: ["id", "conversation_id", "direction", "body", "sent_at"],
+  tags: ["id", "conversation_id", "label"],
 };
 
 export function resolveField(
   target: TargetTable,
   field: string,
-  joinedTables: Set<string>
+  joinedTables: Set<string>,
+  contextTable?: string
 ): { table: string; def: FieldDef } | null {
-  const normalized = field.includes(".") ? field : null;
-
-  if (normalized) {
-    const [table, col] = normalized.split(".", 2);
+  if (field.includes(".")) {
+    const [table, col] = field.split(".", 2);
     const defs = TABLE_FIELDS[table];
     if (!defs?.[col]) return null;
-    if (table !== target && !joinedTables.has(table) && table !== "tags") {
-      if (table === "messages" && !joinedTables.has("messages")) return null;
-      if (table === "tags" && !joinedTables.has("tags")) return null;
+    if (
+      table !== target &&
+      !joinedTables.has(table) &&
+      table !== contextTable
+    ) {
+      return null;
     }
     return { table, def: defs[col] };
+  }
+
+  if (contextTable && TABLE_FIELDS[contextTable]?.[field]) {
+    return { table: contextTable, def: TABLE_FIELDS[contextTable][field] };
   }
 
   if (TABLE_FIELDS[target]?.[field]) {
@@ -117,9 +150,11 @@ export function qualifySelectField(
   return null;
 }
 
-export function inferTablesFromField(field: string): string[] {
-  if (field.includes(".")) {
-    return [field.split(".", 2)[0]];
-  }
-  return [];
+export function tableForField(
+  target: TargetTable,
+  field: string,
+  joinedTables: Set<string>
+): string | null {
+  const resolved = resolveField(target, field, joinedTables);
+  return resolved?.table ?? null;
 }

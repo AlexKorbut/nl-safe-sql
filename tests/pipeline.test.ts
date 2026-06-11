@@ -18,7 +18,7 @@ describe("QueryPipeline", () => {
   const mockIntent = {
     type: "select" as const,
     target: "conversations" as const,
-    select: ["id", "title", "status"],
+    select: ["id", "guest_name", "status"],
     conditions: [{ field: "status", op: "equals" as const, value: "open" }],
     limit: 10,
   };

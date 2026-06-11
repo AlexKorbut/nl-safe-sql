@@ -1,7 +1,7 @@
 {
   "type": "select",
   "target": "conversations",
-  "select": ["id", "title", "status", "created_at"],
+  "select": ["id", "guest_name", "status", "created_at"],
   "conditions": [
     { "field": "status", "op": "equals", "value": "open" },
     { "field": "created_at", "op": "gte", "value": "-7 days" }

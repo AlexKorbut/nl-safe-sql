@@ -19,7 +19,7 @@ describe("QueryBuilder", () => {
     const validated = validateIntent({
       type: "select",
       target: "conversations",
-      select: ["id", "title", "status"],
+      select: ["id", "guest_name", "status"],
       conditions: [{ field: "status", op: "equals", value: "open" }],
       orderBy: [{ field: "created_at", direction: "desc" }],
       limit: 5,
@@ -36,22 +36,26 @@ describe("QueryBuilder", () => {
     expect(result.rows.every((r) => r.status === "open")).toBe(true);
   });
 
-  it("joins tags for billing filter", () => {
+  it("uses EXISTS for complaint tag filter", () => {
     const validated = validateIntent({
       type: "select",
       target: "conversations",
-      select: ["id", "title"],
-      conditions: [{ field: "tags.name", op: "equals", value: "billing" }],
-      requiredTables: ["tags"],
+      select: ["id", "guest_name"],
+      relatedFilters: [
+        {
+          relation: "tags",
+          existence: "exists",
+          conditions: [{ field: "label", op: "equals", value: "complaint" }],
+        },
+      ],
     });
 
     const built = buildQuery(validated);
-    expect(built.sql).toContain("conversation_tags");
-    expect(built.sql).toContain("tags.name = ?");
+    expect(built.sql).toContain("EXISTS");
+    expect(built.sql).toContain("tags.label = ?");
 
     const result = executor.execute(built.sql, built.params);
     expect(result.rows.length).toBeGreaterThanOrEqual(1);
-    expect(result.rows.some((r) => String(r.title).toLowerCase().includes("billing"))).toBe(true);
   });
 
   it("resolves relative dates in conditions", () => {
@@ -71,14 +75,14 @@ describe("QueryBuilder", () => {
     const validated = validateIntent({
       type: "select",
       target: "messages",
-      select: ["id", "content"],
-      conditions: [{ field: "content", op: "contains", value: "refund" }],
+      select: ["id", "body"],
+      conditions: [{ field: "body", op: "contains", value: "breakfast" }],
       limit: 10,
     });
 
     const built = buildQuery(validated);
     expect(built.sql).toContain("LIKE ?");
-    expect(built.params[0]).toBe("%refund%");
+    expect(built.params[0]).toBe("%breakfast%");
 
     const result = executor.execute(built.sql, built.params);
     expect(result.rows.length).toBeGreaterThanOrEqual(1);

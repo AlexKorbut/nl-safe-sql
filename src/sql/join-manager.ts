@@ -10,17 +10,15 @@ const JOIN_RECIPES: Record<
 > = {
   conversations: {
     messages:
-      "INNER JOIN messages ON messages.conversation_id = conversations.id",
-    tags: `INNER JOIN conversation_tags ON conversation_tags.conversation_id = conversations.id
-INNER JOIN tags ON tags.id = conversation_tags.tag_id`,
+      "LEFT JOIN messages ON messages.conversation_id = conversations.id",
+    tags: "LEFT JOIN tags ON tags.conversation_id = conversations.id",
     conversations: "",
   },
   messages: {
     messages: "",
     conversations:
       "INNER JOIN conversations ON conversations.id = messages.conversation_id",
-    tags: `INNER JOIN conversation_tags ON conversation_tags.conversation_id = conversations.id
-INNER JOIN tags ON tags.id = conversation_tags.tag_id`,
+    tags: "LEFT JOIN tags ON tags.conversation_id = messages.conversation_id",
   },
 };
 

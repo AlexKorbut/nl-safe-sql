@@ -20,6 +20,14 @@ describe("DateResolver", () => {
     expect(resolveDateValue("this month", now)).toBe("2026-06-01");
   });
 
+  it("resolves tomorrow", () => {
+    expect(resolveDateValue("tomorrow", now)).toBe("2026-06-04");
+  });
+
+  it("resolves +3 days", () => {
+    expect(resolveDateValue("+3 days", now)).toBe("2026-06-06");
+  });
+
   it("rejects unknown expressions", () => {
     expect(() => resolveDateValue("next quarter", now)).toThrow(
       DateResolutionError

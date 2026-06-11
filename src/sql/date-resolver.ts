@@ -1,4 +1,5 @@
 const RELATIVE_DAYS = /^-(\d+)\s*days?$/i;
+const FUTURE_DAYS = /^\+(\d+)\s*days?$/i;
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 export class DateResolutionError extends Error {
@@ -14,6 +15,12 @@ function formatDate(d: Date): string {
 
 function startOfMonth(d: Date): Date {
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1));
+}
+
+function addDays(d: Date, days: number): Date {
+  const result = new Date(d);
+  result.setUTCDate(result.getUTCDate() + days);
+  return result;
 }
 
 export function resolveDateValue(
@@ -32,6 +39,10 @@ export function resolveDateValue(
     return formatDate(now);
   }
 
+  if (lower === "tomorrow") {
+    return formatDate(addDays(now, 1));
+  }
+
   if (lower === "this month") {
     return formatDate(startOfMonth(now));
   }
@@ -39,9 +50,13 @@ export function resolveDateValue(
   const relMatch = trimmed.match(RELATIVE_DAYS);
   if (relMatch) {
     const days = parseInt(relMatch[1], 10);
-    const result = new Date(now);
-    result.setUTCDate(result.getUTCDate() - days);
-    return formatDate(result);
+    return formatDate(addDays(now, -days));
+  }
+
+  const futureMatch = trimmed.match(FUTURE_DAYS);
+  if (futureMatch) {
+    const days = parseInt(futureMatch[1], 10);
+    return formatDate(addDays(now, days));
   }
 
   if (trimmed.startsWith(">=") || trimmed.startsWith("<=")) {

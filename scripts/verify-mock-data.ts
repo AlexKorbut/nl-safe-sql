@@ -15,44 +15,121 @@ const samples = [
     intent: {
       type: "select" as const,
       target: "conversations" as const,
-      select: ["id", "title", "status"],
+      select: ["id", "guest_name", "status"],
       conditions: [{ field: "status", op: "equals" as const, value: "open" }],
       limit: 20,
     },
+    minRows: 1,
   },
   {
-    name: "Messages containing refund",
+    name: "Email channel",
+    intent: {
+      type: "select" as const,
+      target: "conversations" as const,
+      select: ["id", "guest_name", "channel"],
+      conditions: [{ field: "channel", op: "equals" as const, value: "email" }],
+      limit: 20,
+    },
+    minRows: 1,
+  },
+  {
+    name: "Complaint + breakfast (EXISTS)",
+    intent: {
+      type: "select" as const,
+      target: "conversations" as const,
+      select: ["id", "guest_name"],
+      relatedFilters: [
+        {
+          relation: "tags" as const,
+          existence: "exists" as const,
+          conditions: [{ field: "label", op: "equals" as const, value: "complaint" }],
+        },
+        {
+          relation: "messages" as const,
+          existence: "exists" as const,
+          conditions: [{ field: "body", op: "contains" as const, value: "breakfast" }],
+        },
+      ],
+      limit: 20,
+    },
+    minRows: 1,
+  },
+  {
+    name: "Count by status",
+    intent: {
+      type: "aggregate" as const,
+      target: "conversations" as const,
+      select: [{ fn: "count" as const, field: "*", alias: "count" }, "status"],
+      groupBy: ["status"],
+      limit: 10,
+    },
+    minRows: 2,
+  },
+  {
+    name: "Unanswered conversations",
+    intent: {
+      type: "select" as const,
+      target: "conversations" as const,
+      select: ["id", "guest_name"],
+      relatedFilters: [
+        {
+          relation: "messages" as const,
+          existence: "not_exists" as const,
+          conditions: [{ field: "direction", op: "equals" as const, value: "outgoing" }],
+        },
+      ],
+      limit: 20,
+    },
+    minRows: 1,
+  },
+  {
+    name: "Email OR WhatsApp",
+    intent: {
+      type: "select" as const,
+      target: "conversations" as const,
+      select: ["id", "channel"],
+      conditions: [
+        { field: "channel", op: "equals" as const, value: "email" },
+        { field: "channel", op: "equals" as const, value: "whatsapp" },
+      ],
+      conditionLogic: "or" as const,
+      limit: 50,
+    },
+    minRows: 1,
+  },
+  {
+    name: "Messages starting with Hi",
     intent: {
       type: "select" as const,
       target: "messages" as const,
-      select: ["id", "content"],
-      conditions: [{ field: "content", op: "contains" as const, value: "refund" }],
+      select: ["id", "body"],
+      conditions: [{ field: "body", op: "starts_with" as const, value: "Hi" }],
       limit: 10,
     },
+    minRows: 1,
   },
   {
-    name: "Conversations tagged billing",
+    name: "Incoming count per open conversation",
     intent: {
-      type: "select" as const,
+      type: "aggregate" as const,
       target: "conversations" as const,
-      select: ["id", "title"],
-      conditions: [{ field: "tags.name", op: "equals" as const, value: "billing" }],
-      requiredTables: ["tags" as const],
-      limit: 10,
-    },
-  },
-  {
-    name: "Recent conversations (last 7 days)",
-    intent: {
-      type: "select" as const,
-      target: "conversations" as const,
-      select: ["id", "title", "created_at"],
-      conditions: [
-        { field: "created_at", op: "gte" as const, value: "-7 days" },
+      select: [
+        "id",
+        "guest_name",
+        {
+          fn: "count" as const,
+          field: "messages.id",
+          alias: "incoming_count",
+          filter: [{ field: "direction", op: "equals" as const, value: "incoming" }],
+        },
       ],
-      orderBy: [{ field: "created_at", direction: "desc" as const }],
+      conditions: [{ field: "status", op: "equals" as const, value: "open" }],
+      requiredTables: ["messages" as const],
+      groupBy: ["id", "guest_name"],
+      orderBy: [{ field: "incoming_count", direction: "desc" as const }],
       limit: 10,
     },
+    minRows: 1,
   },
 ];
 
@@ -67,7 +144,7 @@ function main(): void {
     const validated = validateIntent(sample.intent);
     const built = buildQuery(validated);
     const result = executor.execute(built.sql, built.params);
-    const pass = result.rows.length > 0;
+    const pass = result.rows.length >= sample.minRows;
     if (pass) ok++;
     console.log(
       `${pass ? "OK" : "WARN"}  ${sample.name}: ${result.rows.length} row(s)`
