@@ -327,34 +327,47 @@ systemctl restart caddy
 
 ---
 
-## Следующие шаги (Волна 2–3)
+## Полный Roadmap (Волна 2–4) — READY
 
-### Волна 2: Auth + Биллинг (4–5 недель)
+### ✅ Волна 2: Auth + Биллинг (DONE)
 
-- [ ] Auth.js v5 (magic link, Google OAuth)
-- [ ] Stripe Checkout + webhook (Pro subscription, разовый Report unlock)
-- [ ] Дашборд: история аудитов, статус подписки, upgrade CTA
-- [ ] Scheduled re-audits + email alerts (падение скора на X пунктов)
-- [ ] PDF-экспорт (puppeteer)
-- [ ] Customer Portal (Stripe hosted)
-- [ ] RU payments (YooKassa за интерфейсом `PaymentProvider`)
+- [x] Auth.js v5 (magic link via Resend, Google OAuth optional)
+- [x] Stripe Checkout + webhook (Pro $29/mo subscription, Report unlock $19)
+- [x] Dashboard: история аудитов, статус подписки, upgrade CTA
+- [x] Server-side entitlement system (free vs full access)
+- [x] Checkout success/cancel flows
+- [x] Session management with next-auth/react
+- [ ] Scheduled re-audits + email alerts (Wave 3)
+- [ ] PDF-export via puppeteer (Wave 3)
+- [ ] Customer Portal (Stripe hosted, Wave 3)
+- [ ] RU payments (YooKassa via `PaymentProvider` interface, Wave 3)
 
-### Волна 3: Масштаб (4–6 недель)
+### ✅ Волна 3: Масштаб (Infrastructure DONE, UI pending)
 
-- [ ] Глубокий кроулинг (100+ страниц, граф ссылок)
-- [ ] Agency API (OAuth2, rate limits, webhooks)
-- [ ] Google Search Console OAuth (вместо эвристик — реальные данные)
-- [ ] Ads policy LLM classifier (категорийные запреты, misleading detection)
-- [ ] AI-generated fixes (готовые JSON-LD, переписанные title/meta)
-- [ ] Симуляция AI Overview (как ИИ процитирует на список запросов)
+- [x] Deep crawl API: analyze 100+ pages (status, title, H1, word count)
+- [x] Agency API (v1): `/api/v1/audits` with Bearer token auth + quota tracking
+- [x] Token management: create, validate, quota enforcement (200 audits/mo default)
+- [x] Google Search Console OAuth module: fetch real impressions/clicks/CTR
+- [x] AI-generated fixes generator: structured suggestions (JSON-LD, titles, descriptions)
+- [x] Database schema: api_tokens, gsc_connections, crawl_results, ai_suggestions
+- [ ] Web UI for Agency dashboard (API keys, quota usage)
+- [ ] Web UI for GSC connection wizard
+- [ ] Re-audit scheduler (cron-like, cloud function)
+- [ ] Ads policy LLM classifier
+- [ ] AI Overview simulation
 
-### Волна 4: Сообщество (3–4 недели)
+### ✅ Волна 4: Сообщество (Infrastructure DONE, UI pending)
 
-- [ ] Командные аккаунты, роли
-- [ ] hreflang validation
-- [ ] Slack/Telegram alerts
-- [ ] Partner program (реферальные комиссии)
-- [ ] Публичные dashboards (примеры лучших сайтов)
+- [x] Team accounts schema + RBAC model (owner/editor/viewer roles)
+- [x] Permission matrix: create_audits, view_reports, manage_team, manage_billing
+- [x] Slack integration module: webhook + score drop alerts
+- [x] Database schema: slack_integrations, team_members
+- [ ] Web UI: team invitation, member management
+- [ ] Web UI: Slack workspace connection
+- [ ] hreflang validation check
+- [ ] Telegram alerts (parallel to Slack)
+- [ ] Partner program (affiliate tracking, commissions)
+- [ ] Public dashboards (leaderboards, example sites)
 
 ---
 
