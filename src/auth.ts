@@ -1,28 +1,37 @@
-// Mock auth for development - full implementation in next phase
+import { cookies } from "next/headers";
+import { verifySessionToken, type SessionPayload } from "@/server/auth/session";
 
 export interface AuthSession {
-  user?: {
+  user: {
     id: string;
     email: string;
     name?: string;
-    image?: string;
   };
 }
 
 export async function auth(): Promise<AuthSession | null> {
-  // Return null to require auth, or a mock session for development
-  return null;
-}
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("auth-token")?.value;
 
-export async function signIn() {
-  return { ok: true };
+    if (!token) return null;
+
+    const payload = await verifySessionToken(token);
+    if (!payload) return null;
+
+    return {
+      user: {
+        id: payload.userId,
+        email: payload.email,
+        name: payload.name,
+      },
+    };
+  } catch {
+    return null;
+  }
 }
 
 export async function signOut() {
-  return { ok: true };
+  const cookieStore = await cookies();
+  cookieStore.delete("auth-token");
 }
-
-export const handlers = {
-  GET: async () => new Response("Auth handler - GET"),
-  POST: async () => new Response("Auth handler - POST"),
-};
