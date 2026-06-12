@@ -22,22 +22,35 @@ export default async function ReportPage({
   params: Promise<{ id: string; locale: string }>;
 }) {
   const { id, locale } = await params;
+  const session = await auth();
   const audit = db.select().from(schema.audits).where(eq(schema.audits.id, id)).get();
   if (!audit) notFound();
   if (audit.status !== "done") redirect(`/${locale}/audit/${id}`);
 
+  const entitlement = await getAuditEntitlement(id, session);
   const report = serializeReport(
     JSON.parse(audit.resultJson!),
     JSON.parse(audit.scoresJson!),
-    audit.unlocked ? "full" : "free"
+    entitlement
   );
 
   const t = await getTranslations("report");
 
+  const isPaid = entitlement === "full";
+
   return (
     <div className="mx-auto max-w-4xl px-4 py-12">
-      <p className="text-sm text-slate-500">{audit.normalizedUrl}</p>
-      <h1 className="mt-1 text-3xl font-bold">{t("title")}</h1>
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-sm text-slate-500">{audit.normalizedUrl}</p>
+          <h1 className="mt-1 text-3xl font-bold">{t("title")}</h1>
+        </div>
+        {!isPaid && (
+          <CheckoutButton type="report_unlock" auditId={id}>
+            {t("unlock")}
+          </CheckoutButton>
+        )}
+      </div>
 
       <div className="mt-10 grid gap-6 sm:grid-cols-3">
         <ScoreGauge
