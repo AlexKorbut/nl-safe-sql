@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations } from "next-intl/server";
+import { SessionProvider } from "next-auth/react";
+import { auth } from "@/auth";
 import { routing } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
 import "../globals.css";
@@ -23,31 +25,43 @@ export default async function LocaleLayout({
 
   const t = await getTranslations("common");
   const otherLocale = locale === "en" ? "ru" : "en";
+  const session = await auth();
 
   return (
     <html lang={locale} className="h-full antialiased">
       <body className="min-h-full flex flex-col bg-slate-950 text-slate-100">
-        <NextIntlClientProvider>
-          <header className="border-b border-slate-800">
-            <div className="mx-auto max-w-5xl px-4 py-4 flex items-center justify-between">
-              <Link href="/" className="text-lg font-bold tracking-tight">
-                {t("appName")}
-              </Link>
-              <nav className="flex items-center gap-6 text-sm text-slate-300">
-                <Link href="/pricing" className="hover:text-white">
-                  {t("nav.pricing")}
+        <SessionProvider session={session}>
+          <NextIntlClientProvider>
+            <header className="border-b border-slate-800">
+              <div className="mx-auto max-w-5xl px-4 py-4 flex items-center justify-between">
+                <Link href="/" className="text-lg font-bold tracking-tight">
+                  {t("appName")}
                 </Link>
-                <Link href="/" locale={otherLocale} className="hover:text-white uppercase">
-                  {otherLocale}
-                </Link>
-              </nav>
-            </div>
-          </header>
-          <main className="flex-1">{children}</main>
-          <footer className="border-t border-slate-800 py-6 text-center text-xs text-slate-500">
-            {t("appName")} · {new Date().getFullYear()}
-          </footer>
-        </NextIntlClientProvider>
+                <nav className="flex items-center gap-6 text-sm text-slate-300">
+                  <Link href="/pricing" className="hover:text-white">
+                    {t("nav.pricing")}
+                  </Link>
+                  {session?.user ? (
+                    <Link href="/dashboard" className="hover:text-white">
+                      {session.user.email}
+                    </Link>
+                  ) : (
+                    <Link href="/auth/signin" className="hover:text-white">
+                      Sign in
+                    </Link>
+                  )}
+                  <Link href="/" locale={otherLocale} className="hover:text-white uppercase">
+                    {otherLocale}
+                  </Link>
+                </nav>
+              </div>
+            </header>
+            <main className="flex-1">{children}</main>
+            <footer className="border-t border-slate-800 py-6 text-center text-xs text-slate-500">
+              {t("appName")} · {new Date().getFullYear()}
+            </footer>
+          </NextIntlClientProvider>
+        </SessionProvider>
       </body>
     </html>
   );

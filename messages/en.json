@@ -77,13 +77,43 @@
   "pricing": {
     "title": "Pricing",
     "subtitle": "Start free. Pay when you need the full picture.",
-    "comingSoon": "Online payments are coming soon — all reports are fully open during the beta.",
+    "comingSoon": "",
     "plans": {
       "free": { "name": "Free", "price": "$0", "features": "3 audits per day\nOverall scores\nTop 3 issues" },
       "report": { "name": "Report", "price": "$19", "features": "One full report\nAll checks & recommendations\nShareable link" },
-      "pro": { "name": "Pro", "price": "$29/mo", "features": "30 audits per month\nFull reports\nHistory & monitoring (soon)\nUp to 5 sites" },
-      "agency": { "name": "Agency", "price": "$99/mo", "features": "200 audits per month\nWhite-label PDF (soon)\nAPI access (soon)\nUp to 50 sites" }
+      "pro": { "name": "Pro", "price": "$29/mo", "features": "30 audits per month\nFull reports\nHistory & monitoring\nUp to 5 sites" },
+      "agency": { "name": "Agency", "price": "$99/mo", "features": "200 audits per month\nWhite-label PDF\nAPI access\nUp to 50 sites" }
     }
+  },
+  "auth": {
+    "title": "Sign in to your account",
+    "emailLabel": "Email address",
+    "sendLink": "Send sign-in link",
+    "sending": "Sending…",
+    "checkEmail": "Check your email",
+    "emailSent": "We sent a sign-in link to {email}. Click it to log in.",
+    "orGoogle": "Or sign in with",
+    "google": "Google",
+    "signOut": "Sign out"
+  },
+  "dashboard": {
+    "welcome": "Welcome back, {name}!",
+    "subtitle": "Manage your audits and subscription",
+    "currentPlan": "Current plan",
+    "planFree": "Free",
+    "planPro": "Pro",
+    "expiresAt": "Expires {date}",
+    "upgradeTitle": "Ready to unlock more?",
+    "upgradeCTA": "Upgrade to Pro →",
+    "auditHistory": "Your audit history",
+    "noAudits": "No audits yet.",
+    "startOne": "Start your first audit",
+    "viewReport": "View"
+  },
+  "billing": {
+    "unlock": "Unlock full report ($19)",
+    "buyNow": "Buy now",
+    "processing": "Processing…"
   },
   "checks": {
     "cwv-lcp": { "name": "Largest Contentful Paint (LCP)", "rec": "Get LCP under 2.5s: optimize the hero image, use a CDN, preload critical resources." },
