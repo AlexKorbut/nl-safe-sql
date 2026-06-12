@@ -1,0 +1,135 @@
+{
+  "common": {
+    "appName": "GoogleReady",
+    "tagline": "Check how ready your site is for Google's new search and ads rules",
+    "nav": { "pricing": "Pricing" }
+  },
+  "landing": {
+    "heroTitle": "Is your site ready for Google's new rules?",
+    "heroSubtitle": "One URL — a full readiness score for AI search (AI Overviews, E-E-A-T, Core Web Vitals) and Google Ads landing page quality.",
+    "urlPlaceholder": "https://example.com",
+    "submit": "Analyze",
+    "submitting": "Starting…",
+    "errors": {
+      "invalidUrl": "Please enter a valid public website URL.",
+      "rateLimited": "Free audit limit reached for today. Try again tomorrow.",
+      "network": "Network error, please try again."
+    },
+    "features": {
+      "seo": {
+        "title": "AI search readiness",
+        "body": "E-E-A-T signals, AI Overview citability, Core Web Vitals, structured data and indexability — everything Google's new ranking systems look at."
+      },
+      "ads": {
+        "title": "Ads landing quality",
+        "body": "Quality Score factors: speed, mobile experience, trust signals, contact info, privacy policy and misleading-content markers."
+      },
+      "actionable": {
+        "title": "Actionable report",
+        "body": "Not just a score: every check comes with a concrete recommendation you can hand to a developer."
+      }
+    }
+  },
+  "audit": {
+    "title": "Analyzing your site…",
+    "failedTitle": "Audit failed",
+    "failedReasons": {
+      "unreachable": "We couldn't reach this site. Check the URL and try again.",
+      "blocked": "The site blocks automated requests. That itself can hurt Google's crawler too.",
+      "non_html": "This URL doesn't return an HTML page.",
+      "internal": "Something went wrong on our side. Please try again."
+    },
+    "steps": {
+      "fetching": "Fetching the page",
+      "parsing": "Parsing HTML",
+      "robots": "Checking robots.txt",
+      "sitemap": "Checking sitemap",
+      "links": "Sampling internal links",
+      "psi_mobile": "Running PageSpeed (mobile) — this takes up to a minute",
+      "psi_desktop": "Running PageSpeed (desktop)",
+      "llm": "AI content assessment",
+      "scoring": "Computing scores",
+      "done": "Done",
+      "failed": "Failed"
+    }
+  },
+  "report": {
+    "title": "Google Readiness Report",
+    "overall": "Overall",
+    "seoScore": "SEO / AI Search",
+    "adsScore": "Ads Landing",
+    "topIssues": "Top issues to fix first",
+    "lockedTeaser": "Details available in the full report",
+    "grades": {
+      "excellent": "Excellent",
+      "good": "Good",
+      "needs_work": "Needs work",
+      "poor": "Poor"
+    },
+    "categories": {
+      "technical": "Technical & Core Web Vitals",
+      "indexability": "Indexability",
+      "structured_data": "Structured data",
+      "content_eeat": "Content & E-E-A-T",
+      "ads_landing": "Ads landing page"
+    }
+  },
+  "pricing": {
+    "title": "Pricing",
+    "subtitle": "Start free. Pay when you need the full picture.",
+    "comingSoon": "Online payments are coming soon — all reports are fully open during the beta.",
+    "plans": {
+      "free": { "name": "Free", "price": "$0", "features": "3 audits per day\nOverall scores\nTop 3 issues" },
+      "report": { "name": "Report", "price": "$19", "features": "One full report\nAll checks & recommendations\nShareable link" },
+      "pro": { "name": "Pro", "price": "$29/mo", "features": "30 audits per month\nFull reports\nHistory & monitoring (soon)\nUp to 5 sites" },
+      "agency": { "name": "Agency", "price": "$99/mo", "features": "200 audits per month\nWhite-label PDF (soon)\nAPI access (soon)\nUp to 50 sites" }
+    }
+  },
+  "checks": {
+    "cwv-lcp": { "name": "Largest Contentful Paint (LCP)", "rec": "Get LCP under 2.5s: optimize the hero image, use a CDN, preload critical resources." },
+    "cwv-inp": { "name": "Interaction to Next Paint (INP)", "rec": "Keep INP under 200ms: break up long JavaScript tasks and defer non-critical scripts." },
+    "cwv-cls": { "name": "Cumulative Layout Shift (CLS)", "rec": "Reserve space for images, ads and embeds so content doesn't jump while loading." },
+    "psi-performance": { "name": "Lighthouse performance (mobile)", "rec": "Follow PageSpeed Insights suggestions: compress images, reduce JavaScript, enable caching." },
+    "ttfb": { "name": "Server response time (TTFB)", "rec": "Aim for under 800ms: add server caching or move to faster hosting / a CDN." },
+    "https": { "name": "HTTPS", "rec": "Serve the site over HTTPS and redirect all HTTP traffic. This is a hard requirement for both ranking and ads." },
+    "viewport-meta": { "name": "Mobile viewport", "rec": "Add <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">." },
+    "image-optimization": { "name": "Image optimization", "rec": "Serve images in WebP/AVIF and size them appropriately." },
+    "render-blocking": { "name": "Render-blocking resources", "rec": "Inline critical CSS and defer non-critical CSS/JS." },
+    "html-size": { "name": "HTML document size", "rec": "Keep HTML under 500KB; move inline data and scripts out of the document." },
+    "http-status": { "name": "HTTP status & redirects", "rec": "The page should answer 200 with at most one redirect hop." },
+    "robots-allowed": { "name": "robots.txt allows Googlebot", "rec": "Make sure robots.txt doesn't block Googlebot from this URL." },
+    "meta-noindex": { "name": "No noindex directive", "rec": "Remove the noindex robots meta tag / X-Robots-Tag header if this page should rank." },
+    "canonical": { "name": "Canonical URL", "rec": "Add a self-referencing canonical link, or make sure it points at the preferred URL." },
+    "sitemap": { "name": "XML sitemap", "rec": "Provide a sitemap.xml, reference it in robots.txt and include this URL." },
+    "crawlable-links": { "name": "Crawlable links", "rec": "Use real <a href> links so Google can discover your pages." },
+    "lang-attribute": { "name": "Language attribute", "rec": "Set <html lang=\"…\"> to the page language." },
+    "jsonld-present": { "name": "JSON-LD structured data", "rec": "Add JSON-LD markup — structured data feeds Google's AI search features directly." },
+    "jsonld-errors": { "name": "Structured data validity", "rec": "Fix malformed JSON-LD blocks; broken markup is ignored by Google." },
+    "jsonld-org-or-website": { "name": "Organization / WebSite markup", "rec": "Add Organization or WebSite JSON-LD with name and url — a key trust signal." },
+    "jsonld-page-type": { "name": "Page-type markup", "rec": "Mark the page up as Article, Product, FAQPage etc. so AI search can classify it." },
+    "og-twitter-meta": { "name": "Open Graph / social meta", "rec": "Add og:title, og:description and og:image for rich sharing previews." },
+    "title-tag": { "name": "Title tag", "rec": "Write a unique 15–65 character title that matches the page's main promise." },
+    "meta-description": { "name": "Meta description", "rec": "Add a 50–160 character description summarizing the page." },
+    "h1": { "name": "H1 heading", "rec": "Use exactly one H1 that states what the page is about." },
+    "content-depth": { "name": "Content depth", "rec": "Thin pages rank poorly and get skipped by AI search. Aim for 300+ words of substantive content." },
+    "image-alt": { "name": "Image alt texts", "rec": "Describe content images with alt attributes." },
+    "author-byline": { "name": "Author attribution", "rec": "Show who wrote the content (byline + Person markup) — core E-E-A-T signal." },
+    "freshness": { "name": "Content freshness", "rec": "Show a visible publish/update date and add datePublished/dateModified markup." },
+    "about-contact-pages": { "name": "About & contact pages", "rec": "Link to About and Contact pages — Google uses them to assess site trustworthiness." },
+    "heading-structure": { "name": "Heading hierarchy", "rec": "Don't skip heading levels (H2 → H4); a clean outline helps AI extract answers." },
+    "llm-eeat": { "name": "AI: E-E-A-T signals", "rec": "Demonstrate first-hand experience and expertise: credentials, sources, real examples." },
+    "llm-helpfulness": { "name": "AI: Helpful content", "rec": "Make content people-first: answer the visitor's question fully instead of writing for keywords." },
+    "llm-ai-citability": { "name": "AI: Citability in AI Overviews", "rec": "Give direct, extractable answers: clear definitions, facts in text (not images), Q&A-shaped sections." },
+    "llm-clarity-structure": { "name": "AI: Structure & clarity", "rec": "Make the page scannable: descriptive headings, short paragraphs, lists and tables." },
+    "ads-contact-info": { "name": "Contact information", "rec": "Show a phone number, email or contact page — Google Ads requires reachable advertisers." },
+    "ads-privacy-policy": { "name": "Privacy policy & terms", "rec": "Link to a privacy policy; collecting leads without one violates Google Ads policy." },
+    "ads-speed": { "name": "Landing page speed", "rec": "Slow landing pages lower Quality Score and raise CPC. Optimize mobile speed first." },
+    "ads-mobile-usability": { "name": "Mobile usability", "rec": "Make tap targets and fonts comfortable on mobile devices." },
+    "ads-interstitial-heuristic": { "name": "Intrusive popups", "rec": "Avoid full-screen popups on landing — they hurt both ads experience and mobile ranking." },
+    "ads-cta-form": { "name": "Call to action", "rec": "Add a clear CTA: a form, a phone link or a prominent action button." },
+    "ads-trust-signals": { "name": "Trust signals", "rec": "Add business identity: organization markup, a physical address, HTTPS." },
+    "ads-broken-links": { "name": "Broken links", "rec": "Fix broken internal links — they degrade landing page experience." },
+    "ads-popunder-redirect": { "name": "Redirects & meta-refresh", "rec": "Avoid cross-domain redirects and meta-refresh — both are Google Ads destination violations." },
+    "llm-ads-relevance": { "name": "AI: Ad relevance & honesty", "rec": "Match the above-fold promise to the actual offer; remove fake urgency and unverifiable claims." }
+  }
+}
