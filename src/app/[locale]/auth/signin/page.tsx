@@ -2,25 +2,47 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { signIn } from "next-auth/react";
-import { useRouter } from "@/i18n/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function SignInPage() {
   const t = useTranslations("auth");
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    const result = await signIn("resend", { email, redirect: false });
-    setLoading(false);
-    if (result?.ok) {
+    setError(null);
+
+    try {
+      const response = await fetch("/api/auth/signin", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          email,
+          callbackUrl: `${window.location.origin}/api/auth/callback`,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        setError(data.error || "Failed to send magic link");
+        setLoading(false);
+        return;
+      }
+
       setSubmitted(true);
+    } catch (err) {
+      setError("Network error. Please try again.");
+      setLoading(false);
     }
   }
+
+  const errorMessage = searchParams.get("error");
 
   if (submitted) {
     return (
@@ -34,6 +56,16 @@ export default function SignInPage() {
   return (
     <div className="mx-auto max-w-md px-4 py-24">
       <h1 className="text-2xl font-bold">{t("title")}</h1>
+      {errorMessage && (
+        <div className="mt-4 p-3 rounded-lg bg-red-900/30 border border-red-800 text-sm text-red-200">
+          {errorMessage}
+        </div>
+      )}
+      {error && (
+        <div className="mt-4 p-3 rounded-lg bg-red-900/30 border border-red-800 text-sm text-red-200">
+          {error}
+        </div>
+      )}
       <form onSubmit={handleSubmit} className="mt-8 space-y-4">
         <div>
           <label className="text-sm font-medium">{t("emailLabel")}</label>
@@ -54,15 +86,6 @@ export default function SignInPage() {
           {loading ? t("sending") : t("sendLink")}
         </button>
       </form>
-      <p className="mt-6 text-center text-sm text-slate-400">
-        {t("orGoogle")}{" "}
-        <button
-          onClick={() => signIn("google", { redirect: false })}
-          className="text-indigo-400 hover:text-indigo-300"
-        >
-          {t("google")}
-        </button>
-      </p>
     </div>
   );
 }

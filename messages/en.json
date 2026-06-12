@@ -160,6 +160,91 @@
     "ads-trust-signals": { "name": "Trust signals", "rec": "Add business identity: organization markup, a physical address, HTTPS." },
     "ads-broken-links": { "name": "Broken links", "rec": "Fix broken internal links — they degrade landing page experience." },
     "ads-popunder-redirect": { "name": "Redirects & meta-refresh", "rec": "Avoid cross-domain redirects and meta-refresh — both are Google Ads destination violations." },
-    "llm-ads-relevance": { "name": "AI: Ad relevance & honesty", "rec": "Match the above-fold promise to the actual offer; remove fake urgency and unverifiable claims." }
+    "llm-ads-relevance": { "name": "AI: Ad relevance & honesty", "rec": "Match the above-fold promise to the actual offer; remove fake urgency and unverifiable claims." },
+    "hreflang": { "name": "hreflang tags", "rec": "If your site has alternate language versions, add hreflang link elements to help Google index the right version per locale." }
+  },
+  "api": {
+    "title": "API Keys",
+    "subtitle": "Generate and manage API tokens for automated audits",
+    "createButton": "Generate new key",
+    "keyName": "Key name",
+    "namePlaceholder": "e.g., my-app, production-checker",
+    "generate": "Generate key",
+    "copy": "Copy",
+    "delete": "Delete",
+    "copied": "Copied!",
+    "createdAt": "Created",
+    "quota": "Usage this month",
+    "quotaLimit": "200 audits/month",
+    "noKeys": "No API keys yet",
+    "warning": "Never share your API key publicly. Treat it like a password.",
+    "successMessage": "Key created! Copy it now—you won't see it again."
+  },
+  "gsc": {
+    "title": "Google Search Console",
+    "subtitle": "Connect your GSC account to see real search metrics",
+    "connectButton": "Connect to Google Search Console",
+    "connecting": "Connecting…",
+    "properties": "Your properties",
+    "noProperties": "No properties connected yet",
+    "resync": "Resync data",
+    "resyncing": "Syncing…",
+    "topQueries": "Top search queries (last 90 days)",
+    "impressions": "Impressions",
+    "clicks": "Clicks",
+    "ctr": "CTR",
+    "position": "Avg position"
+  },
+  "reaudits": {
+    "title": "Scheduled Re-audits",
+    "subtitle": "Set up automatic re-checks of your site and get alerts when scores drop",
+    "addButton": "Schedule new audit",
+    "siteUrl": "Site URL",
+    "frequency": "How often",
+    "frequencyWeekly": "Weekly",
+    "frequencyBiweekly": "Every 2 weeks",
+    "frequencyMonthly": "Monthly",
+    "alertThreshold": "Alert me if score drops by",
+    "points": "points",
+    "schedules": "Your scheduled audits",
+    "nextRun": "Next run",
+    "enabled": "Enabled",
+    "disable": "Disable",
+    "enable": "Enable",
+    "delete": "Delete",
+    "noSchedules": "No scheduled audits yet"
+  },
+  "team": {
+    "title": "Team",
+    "subtitle": "Manage access to your audits and settings",
+    "inviteButton": "Invite team member",
+    "memberEmail": "Email address",
+    "role": "Role",
+    "roleOwner": "Owner (can invite, manage billing)",
+    "roleEditor": "Editor (can run audits, view reports)",
+    "roleViewer": "Viewer (view-only access)",
+    "invite": "Send invite",
+    "inviting": "Sending…",
+    "members": "Team members",
+    "pending": "Pending invites",
+    "remove": "Remove",
+    "noMembers": "Just you for now"
+  },
+  "partner": {
+    "title": "Partner Program",
+    "subtitle": "Earn commission on every referral",
+    "applyNow": "Apply Now",
+    "commission": "Commission structure",
+    "commissions": "Earn recurring commissions on every customer you refer",
+    "faq": "Frequently asked",
+    "benefits": [
+      { "title": "Commissions", "desc": "Earn 20-30% on every referral" },
+      { "title": "Growth", "desc": "Scale your agency revenue" },
+      { "title": "Support", "desc": "Dedicated partner manager" },
+      { "title": "Analytics", "desc": "Real-time tracking dashboard" }
+    ]
+  },
+  "report": {
+    "unlock": "Unlock full report ($19)"
   }
 }
