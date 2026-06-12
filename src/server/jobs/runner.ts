@@ -25,12 +25,16 @@ class AuditRunner {
 
   /** Re-queues audits left queued/running by a previous process. */
   private recoverStuck() {
-    const stuck = db
-      .select({ id: schema.audits.id })
-      .from(schema.audits)
-      .where(inArray(schema.audits.status, ["queued", "running"]))
-      .all();
-    for (const row of stuck) this.enqueue(row.id);
+    try {
+      const stuck = db
+        .select({ id: schema.audits.id })
+        .from(schema.audits)
+        .where(inArray(schema.audits.status, ["queued", "running"]))
+        .all();
+      for (const row of stuck) this.enqueue(row.id);
+    } catch (error) {
+      // Table may not exist during build; ignore
+    }
   }
 
   enqueue(auditId: string) {

@@ -1,4 +1,6 @@
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
+export * from "./schema-wave3";
+export * from "./schema-final";
 
 export const users = sqliteTable("users", {
   id: text("id").primaryKey(),
