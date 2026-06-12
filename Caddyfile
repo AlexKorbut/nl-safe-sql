@@ -1,0 +1,26 @@
+# Пример Caddy конфига для production
+# Замени {$DOMAIN} на твой домен (или localhost для тестирования)
+
+{$DOMAIN:localhost:3000} {
+	reverse_proxy app:3000 {
+		# Timeouts for long-running audits (PageSpeed Insights может идти ~60s)
+		transport http {
+			dial_timeout 10s
+			read_timeout 90s
+			write_timeout 90s
+		}
+	}
+
+	# Логирование (опционально)
+	log {
+		output stdout
+		format json
+	}
+
+	# Security headers
+	header {
+		X-Frame-Options "SAMEORIGIN"
+		X-Content-Type-Options "nosniff"
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+	}
+}

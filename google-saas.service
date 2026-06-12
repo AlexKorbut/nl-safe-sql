@@ -1,0 +1,29 @@
+[Unit]
+Description=GoogleReady SaaS Auditor
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/opt/google-saas
+ExecStart=/usr/bin/node /opt/google-saas/.next/standalone/server.js
+
+# Environment variables
+EnvironmentFile=/opt/google-saas/.env.production
+Environment="NODE_ENV=production"
+
+# Security
+PrivateTmp=yes
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/lib/google-saas
+
+# Restart policy
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
