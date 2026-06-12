@@ -34,7 +34,7 @@ export async function sendSlackAlert(args: {
   };
 
   try {
-    await fetch(webhookUrl, {
+    await fetch(args.webhookUrl, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(message),

@@ -8,7 +8,7 @@ export function SignOutButton() {
 
   return (
     <button
-      onClick={() => signOut({ redirectUrl: "/" })}
+      onClick={() => signOut({ redirect: true, callbackUrl: "/" })}
       className="rounded-lg border border-slate-700 px-4 py-2 text-sm hover:bg-slate-900/50"
     >
       {t("signOut")}

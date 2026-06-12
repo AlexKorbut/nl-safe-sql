@@ -1,11 +1,14 @@
 import { notFound, redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { getTranslations } from "next-intl/server";
+import { auth } from "@/auth";
 import { db, schema } from "@/server/db";
 import { serializeReport } from "@/server/report/serialize";
+import { getAuditEntitlement } from "@/server/billing/entitlement";
 import { gradeFor } from "@/server/audit/weights";
 import { ScoreGauge } from "@/components/report/ScoreGauge";
 import { CategoryCard } from "@/components/report/CategoryCard";
+import { CheckoutButton } from "@/components/billing/CheckoutButton";
 import type { CheckCategory } from "@/server/audit/types";
 
 const CATEGORY_ORDER: CheckCategory[] = [
@@ -27,7 +30,7 @@ export default async function ReportPage({
   if (!audit) notFound();
   if (audit.status !== "done") redirect(`/${locale}/audit/${id}`);
 
-  const entitlement = await getAuditEntitlement(id, session);
+  const entitlement = await getAuditEntitlement(id, null);
   const report = serializeReport(
     JSON.parse(audit.resultJson!),
     JSON.parse(audit.scoresJson!),

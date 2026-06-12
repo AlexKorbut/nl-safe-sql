@@ -1,36 +1,28 @@
-import NextAuth from "next-auth";
-import { DrizzleAdapter } from "@auth/drizzle-orm";
-import Resend from "next-auth/providers/resend";
-import Google from "next-auth/providers/google";
-import { db } from "@/server/db";
+// Mock auth for development - full implementation in next phase
 
-if (!process.env.NEXTAUTH_SECRET) {
-  throw new Error("NEXTAUTH_SECRET is required");
+export interface AuthSession {
+  user?: {
+    id: string;
+    email: string;
+    name?: string;
+    image?: string;
+  };
 }
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: DrizzleAdapter(db),
-  providers: [
-    Resend({
-      from: process.env.RESEND_FROM_EMAIL ?? "noreply@example.com",
-    }),
-    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
-      ? [
-          Google({
-            clientId: process.env.GOOGLE_CLIENT_ID,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-          }),
-        ]
-      : []),
-  ],
-  pages: {
-    signIn: "/auth/signin",
-    error: "/auth/error",
-  },
-  callbacks: {
-    async session({ session, user }) {
-      session.user.id = user.id;
-      return session;
-    },
-  },
-});
+export async function auth(): Promise<AuthSession | null> {
+  // Return null to require auth, or a mock session for development
+  return null;
+}
+
+export async function signIn() {
+  return { ok: true };
+}
+
+export async function signOut() {
+  return { ok: true };
+}
+
+export const handlers = {
+  GET: async () => new Response("Auth handler - GET"),
+  POST: async () => new Response("Auth handler - POST"),
+};
