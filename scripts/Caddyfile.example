@@ -1,0 +1,73 @@
+# Caddy configuration for GoogleSaas
+# Copy to /etc/caddy/Caddyfile and update domain
+
+yourdomain.com {
+    # Reverse proxy to Node.js application
+    reverse_proxy localhost:3000 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+
+        # Connection settings
+        transport http {
+            dial_timeout 10s
+            response_header_timeout 30s
+        }
+    }
+
+    # Security headers
+    header {
+        # Prevent MIME type sniffing
+        X-Content-Type-Options "nosniff"
+
+        # Clickjacking protection
+        X-Frame-Options "DENY"
+
+        # XSS protection (legacy, mostly for older browsers)
+        X-XSS-Protection "1; mode=block"
+
+        # Strict transport security (forces HTTPS, 1 year)
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+
+        # Referrer policy
+        Referrer-Policy "strict-origin-when-cross-origin"
+
+        # Permissions policy (limit browser APIs)
+        Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=()"
+
+        # Content security policy (can be strict or permissive)
+        # Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
+    }
+
+    # Enable gzip compression
+    encode gzip
+
+    # Remove server headers (default: Caddy)
+    header {
+        -Server
+    }
+
+    # Optional: rate limiting (protect against abuse)
+    # rate 100/m /api/*
+
+    # Optional: request logging
+    # log {
+    #     output file /var/log/caddy/google-saas.log {
+    #         roll_size 100mb
+    #         roll_keep 3
+    #     }
+    #     format json
+    # }
+}
+
+# Redirect www subdomain to main domain (optional)
+# www.yourdomain.com {
+#     redir https://yourdomain.com{uri} permanent
+# }
+
+# Staging/testing domain (optional)
+# staging.yourdomain.com {
+#     reverse_proxy localhost:3001
+#     # Same headers as above...
+# }

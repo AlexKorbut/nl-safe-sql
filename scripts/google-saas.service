@@ -1,0 +1,45 @@
+[Unit]
+Description=GoogleSaas Audit Service
+Documentation=https://github.com/AlexKorbut/nl-safe-sql
+After=network.target
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+[Service]
+Type=simple
+User=google-saas
+Group=google-saas
+WorkingDirectory=/opt/google-saas
+EnvironmentFile=/opt/google-saas/.env
+
+# Service execution
+ExecStart=/usr/bin/node /opt/google-saas/.next/standalone/server.js
+
+# Restart policy
+Restart=always
+RestartSec=5
+StartLimitInterval=600
+StartLimitBurst=10
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=google-saas
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/google-saas
+
+# Resource limits (optional, tune as needed)
+LimitNOFILE=65536
+LimitNPROC=512
+
+# Timeout
+TimeoutStartSec=30
+TimeoutStopSec=10
+
+[Install]
+WantedBy=multi-user.target
